@@ -1,0 +1,9 @@
+# Logs
+
+# Modules
+node_modules
+.env*
+
+# Editor directories and files
+tsconfig copy.json
+configs-old.ts
