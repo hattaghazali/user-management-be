@@ -25,7 +25,7 @@ const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response, next: N
             return;
         }
 
-        const accessToken = jwt.sign({ _id: findUser._id }, 'SECRET', { expiresIn: '15m' });
+        const accessToken = jwt.sign({ _id: findUser._id }, 'SECRET', { expiresIn: '1m' });
         const refreshToken = jwt.sign({ _id: findUser._id }, 'SECRET', { expiresIn: '180d' });
 
         if (accessToken && refreshToken) {
