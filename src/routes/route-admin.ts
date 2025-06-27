@@ -1,15 +1,17 @@
-import { Router } from 'express'
+import { Router } from 'express';
 import {
-    adminGetUsers,
     adminLogin,
-    adminRegisterUser,
-} from '../controllers/controller-admin'
+    adminRegisterAUser,
+    adminGetUsers,
+    adminGetUserDemographics,
+} from '../controllers/controller-admin';
+import verifyToken from '../middlewares/mware-vertifytoken';
 
-// START BASIC ROUTING
-const router: Router = Router()
+// START: Admin Routes
+const router: Router = Router();
+router.post('/login', adminLogin);
+router.post('/register-user', verifyToken, adminRegisterAUser);
+router.get('/list-users', verifyToken, adminGetUsers);
+router.get('/user-demographics', verifyToken, adminGetUserDemographics);
 
-router.post('/register', adminRegisterUser)
-router.post('/login', adminLogin)
-router.get('/list-users', adminGetUsers)
-
-export default router
+export default router;

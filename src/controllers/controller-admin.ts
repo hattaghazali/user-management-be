@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+
 import { User } from '../models/model-user';
 import { IReqUser } from '../types/type-controller';
 
@@ -8,9 +9,9 @@ const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response, next: N
     try {
         const { email, password } = req.body;
 
-        const findUser = await User.findOne({ u_email: email });
+        const getUser = await User.findOne({ u_email: email });
 
-        if (!findUser) {
+        if (!getUser) {
             res.status(400).json({
                 success: true,
                 message: `User of ${email} does not exist`,
@@ -18,15 +19,19 @@ const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response, next: N
             return;
         }
 
-        const passwordMatch = await bcrypt.compare(password, findUser.u_password);
+        const passwordMatch = await bcrypt.compare(password, getUser.u_password);
 
         if (!passwordMatch) {
             res.status(401).json({ error: 'Invalid credentials' });
             return;
         }
 
-        const accessToken = jwt.sign({ _id: findUser._id }, 'SECRET', { expiresIn: '1m' });
-        const refreshToken = jwt.sign({ _id: findUser._id }, 'SECRET', { expiresIn: '180d' });
+        const accessToken = jwt.sign({ _id: getUser._id }, 'SECRET', {
+            expiresIn: '50m',
+        });
+        const refreshToken = jwt.sign({ _id: getUser._id }, 'SECRET', {
+            expiresIn: '180d',
+        });
 
         if (accessToken && refreshToken) {
             res.status(200).json({ accessToken, refreshToken });
@@ -43,7 +48,7 @@ const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response, next: N
     }
 };
 
-const adminRegisterUser = async (req: Request<{}, {}, IReqUser>, res: Response) => {
+const adminRegisterAUser = async (req: Request<{}, {}, IReqUser>, res: Response) => {
     try {
         const { email, password, name, status, gender, occupation, state } = req.body;
 
@@ -90,11 +95,35 @@ const adminRegisterUser = async (req: Request<{}, {}, IReqUser>, res: Response) 
 
 const adminGetUsers = async (req: Request, res: Response) => {
     try {
-        const users = await User.find({});
-        if (users) {
-            res.status(200).json(users);
-            return;
-        }
+        const VALID_STATES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+        const page = parseInt(req.query.page as string) || 1;
+        const name = req.query.name || '';
+        const state = req.query.state ? parseInt(req.query.state as string) : undefined;
+        // const limit = parseInt(req.query.limit as string) || 5;
+        const limit = 5;
+        const skip = (page - 1) * limit;
+
+        const findQuery = {
+            ...(name && { u_name: { $regex: name, $options: 'i' } }),
+            u_state: state !== undefined ? state : { $in: VALID_STATES }, // Use $in for all states if not provided
+        };
+
+        const [totalUsers, users] = await Promise.all([
+            User.countDocuments(),
+            User.find(findQuery).skip(skip).limit(limit).lean(), // Convert to plain JavaScript objects for better performance
+        ]);
+        const totalPages = Math.ceil(totalUsers / limit);
+
+        res.status(200).json({
+            success: true,
+            pagination: {
+                current_page: page,
+                total_page: totalPages,
+                total_users: totalUsers,
+                limit,
+            },
+            users,
+        });
     } catch (error) {
         if (error instanceof Error) {
             res.status(500).json({
@@ -106,4 +135,63 @@ const adminGetUsers = async (req: Request, res: Response) => {
     }
 };
 
-export { adminGetUsers, adminLogin, adminRegisterUser };
+const adminGetUserDemographics = async (req: Request, res: Response) => {
+    const localDateStartOfDay = new Date(2025, 4, 1, 0, 0, 0, 0);
+    const localDateEndOfDay = new Date(2025, 4, 31, 23, 59, 59, 999);
+    const isoStartOfDay = localDateStartOfDay.toISOString();
+    const isoEndOfDay = localDateEndOfDay.toISOString();
+
+    const { date_from, date_to } = req.query;
+    const dateFilter = {
+        createdAt: {
+            $gte: date_from || isoStartOfDay,
+            $lte: date_to || isoEndOfDay,
+        },
+    };
+
+    try {
+        const [
+            totalUsers,
+            totalMales,
+            totalFemales,
+            totalOccupationStudent,
+            totalOccupationEmploy,
+        ] = await Promise.all([
+            User.countDocuments(dateFilter),
+            User.countDocuments({
+                u_gender: 1,
+                ...dateFilter,
+            }),
+            User.countDocuments({
+                u_gender: 2,
+                ...dateFilter,
+            }),
+            User.countDocuments({
+                u_occupation: 1,
+                ...dateFilter,
+            }),
+            User.countDocuments({
+                u_occupation: 2,
+                ...dateFilter,
+            }),
+        ]);
+        res.status(200).json({
+            success: true,
+            total_users: totalUsers,
+            total_male: totalMales,
+            total_female: totalFemales,
+            total_occupation_student: totalOccupationStudent,
+            total_occupation_employ: totalOccupationEmploy,
+        });
+    } catch (error) {
+        if (error instanceof Error) {
+            res.status(500).json({
+                success: false,
+                message: `Error of adminGetUserDemographics: ${error.message}`,
+            });
+            return;
+        }
+    }
+};
+
+export { adminGetUsers, adminLogin, adminRegisterAUser, adminGetUserDemographics };
