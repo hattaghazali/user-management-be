@@ -27,7 +27,7 @@ const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response, next: N
         }
 
         const accessToken = jwt.sign({ _id: getUser._id }, 'SECRET', {
-            expiresIn: '50m',
+            expiresIn: '1d',
         });
         const refreshToken = jwt.sign({ _id: getUser._id }, 'SECRET', {
             expiresIn: '180d',
@@ -98,32 +98,48 @@ const adminGetUsers = async (req: Request, res: Response) => {
         const VALID_STATES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
         const page = parseInt(req.query.page as string) || 1;
         const name = req.query.name || '';
-        const state = req.query.state ? parseInt(req.query.state as string) : undefined;
+        // const states = req.query.state ? parseInt(req.query.state as string) : undefined;
+        const states = req.query.states as string;
+
+        let statesToQuery: number[] = [];
+        if (states) {
+            const statesArray = states.split(',').map(Number);
+            statesToQuery = statesArray;
+        }
+
         // const limit = parseInt(req.query.limit as string) || 5;
         const limit = 5;
         const skip = (page - 1) * limit;
 
         const findQuery = {
             ...(name && { u_name: { $regex: name, $options: 'i' } }),
-            u_state: state !== undefined ? state : { $in: VALID_STATES }, // Use $in for all states if not provided
+            u_state: states !== undefined ? { $in: statesToQuery } : { $in: VALID_STATES },
         };
 
-        const [totalUsers, users] = await Promise.all([
-            User.countDocuments(),
-            User.find(findQuery).skip(skip).limit(limit).lean(), // Convert to plain JavaScript objects for better performance
+        const [totalUsersCount, users] = await Promise.all([
+            User.countDocuments(findQuery),
+            User.find(findQuery)
+                .select('u_name u_email u_occupation u_state u_status')
+                .skip(skip)
+                .limit(limit)
+                .lean(), // Convert to plain JavaScript objects for better performance
         ]);
-        const totalPages = Math.ceil(totalUsers / limit);
 
-        res.status(200).json({
-            success: true,
-            pagination: {
-                current_page: page,
-                total_page: totalPages,
-                total_users: totalUsers,
-                limit,
-            },
-            users,
-        });
+        const totalPages = Math.ceil(totalUsersCount / limit);
+
+        if (totalUsersCount && users) {
+            res.status(200).json({
+                success: true,
+                pagination: {
+                    current_page: page,
+                    total_page: totalPages,
+                    limit,
+                    total_users: totalUsersCount,
+                },
+                users: users,
+            });
+            return;
+        }
     } catch (error) {
         if (error instanceof Error) {
             res.status(500).json({
@@ -135,9 +151,34 @@ const adminGetUsers = async (req: Request, res: Response) => {
     }
 };
 
+const adminGetAUser = async (req: Request, res: Response) => {
+    try {
+        const userID = req.params.id;
+        console.log(userID);
+
+        const getUserDetails = await User.findById(userID)
+            .select('u_name u_email u_gender u_occupation u_state u_status createdAt updatedAt')
+            .lean();
+        if (getUserDetails) {
+            res.status(200).json({
+                success: true,
+                getUserDetails,
+            });
+        }
+    } catch (error) {
+        if (error instanceof Error) {
+            res.status(500).json({
+                success: false,
+                message: `Error of adminGetAUser: ${error.message}`,
+            });
+            return;
+        }
+    }
+};
+
 const adminGetUserDemographics = async (req: Request, res: Response) => {
-    const localDateStartOfDay = new Date(2025, 4, 1, 0, 0, 0, 0);
-    const localDateEndOfDay = new Date(2025, 4, 31, 23, 59, 59, 999);
+    const localDateStartOfDay = new Date(2024, 11, 31, 0, 0, 0, 0);
+    const localDateEndOfDay = new Date(2024, 11, 31, 23, 59, 59, 999);
     const isoStartOfDay = localDateStartOfDay.toISOString();
     const isoEndOfDay = localDateEndOfDay.toISOString();
 
@@ -194,4 +235,4 @@ const adminGetUserDemographics = async (req: Request, res: Response) => {
     }
 };
 
-export { adminGetUsers, adminLogin, adminRegisterAUser, adminGetUserDemographics };
+export { adminGetUsers, adminLogin, adminRegisterAUser, adminGetUserDemographics, adminGetAUser };
