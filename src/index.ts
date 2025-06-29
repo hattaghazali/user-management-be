@@ -1,7 +1,7 @@
 import express, { Application } from 'express';
 import connectDB from './configs/connect-db';
 import configs from './configs/configs';
-import route_admin from './routes/route-admin';
+import routeAdmin from './routes/route-admin';
 import { routeNotFound } from './middlewares/mware-notfound';
 
 const app: Application = express();
@@ -13,7 +13,7 @@ connectDB();
 app.use(express.json());
 
 // START: Routes
-app.use('/api/admin', route_admin);
+app.use('/api/admin', routeAdmin);
 app.use(routeNotFound);
 
 // START: Server

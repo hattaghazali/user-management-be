@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "cross-env NODE_ENV=development nodemon",
         "staging": "cross-env NODE_ENV=staging nodemon",
-        "prod": "cross-env NODE_ENV=production yarn run build && node dist/index.js",
+        "prod": "cross-env NODE_ENV=production node dist/index.js",
         "build": "tsc"
     },
     "dependencies": {
@@ -24,6 +24,7 @@
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.3",
         "@types/jsonwebtoken": "^9.0.10",
+        "@types/mongoose": "^5.11.97",
         "@types/node-cron": "^3.0.11",
         "cross-env": "^7.0.3",
         "nodemon": "^3.1.10",

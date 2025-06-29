@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from 'express'
+import { Request, Response, NextFunction } from 'express';
 
 // 404 Not Found handler
-export const notFoundHandler = (
+export const routeNotFound = (
     req: Request,
     res: Response,
     next: NextFunction
@@ -10,5 +10,5 @@ export const notFoundHandler = (
         message: 'API Route Not Found',
         method: req.method,
         path: req.originalUrl,
-    })
-}
+    });
+};

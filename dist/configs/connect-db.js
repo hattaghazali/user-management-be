@@ -17,18 +17,22 @@ const configs_1 = __importDefault(require("./configs"));
 const connectDB = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (mongoose_1.default.connection.readyState === 1) {
-            console.log("LOG: Already connected to MongoDB");
+            console.log('LOG: Already connected to MongoDB.');
             return;
         }
         const db_connection = yield mongoose_1.default.connect(configs_1.default.mongo_url, {
             connectTimeoutMS: 5000,
             serverSelectionTimeoutMS: 5000,
         });
-        console.log("LOG: Connected to MongoDB! Version ", db_connection.version);
+        console.log('[LOG] MongoDB connected. VERSION:', db_connection.version);
+        console.log('------------------------------------------------------------------------------');
+        return;
     }
     catch (error) {
-        console.error("LOG: DB Connection Error! ", error);
-        setTimeout(connectDB, 5000); // Retry after 5 seconds
+        if (error instanceof Error) {
+            console.error('[LOG] MongoDB connection issues.', error);
+            return;
+        }
     }
 });
 exports.default = connectDB;
