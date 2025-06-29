@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "cross-env NODE_ENV=development nodemon",
         "staging": "cross-env NODE_ENV=staging nodemon",
-        "prod": "cross-env NODE_ENV=production yarn run build && node dist/index.js",
+        "prod": "cross-env NODE_ENV=production node dist/index.js",
         "build": "tsc"
     },
     "dependencies": {
