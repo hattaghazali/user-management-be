@@ -33,6 +33,7 @@ export enum EStatus {
     Active = 1,
     Deactive = 2,
 }
+
 export interface IUser extends Document {
     _id: string;
     u_email: string;
