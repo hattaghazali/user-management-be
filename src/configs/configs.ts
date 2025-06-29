@@ -9,9 +9,7 @@ const nodeEnv = process.env.NODE_ENV;
 let envPath;
 switch (nodeEnv) {
     case 'production':
-        envPath =
-            path.resolve(__dirname, '../../.env.production') ||
-            path.resolve(__dirname, '../../.env');
+        envPath = path.resolve(__dirname, '../../.env');
         break;
     case 'staging':
         envPath = path.resolve(__dirname, '../../.env.staging');
