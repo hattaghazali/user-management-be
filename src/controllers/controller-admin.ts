@@ -41,7 +41,7 @@ const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response, next: N
         if (error instanceof Error) {
             res.status(500).json({
                 success: false,
-                message: `Error of adminLogin: ${error.message}`,
+                message: `[LOG] Error of adminLogin: ${error.message}`,
             });
             return;
         }
@@ -86,7 +86,7 @@ const adminRegisterAUser = async (req: Request<{}, {}, IReqUser>, res: Response)
         if (error instanceof Error) {
             res.status(500).json({
                 success: false,
-                message: `Error of admin registering a user: ${error.message}`,
+                message: `[LOG] Error of admin registering a user: ${error.message}`,
             });
             return;
         }
@@ -145,7 +145,7 @@ const adminGetUsers = async (req: Request, res: Response) => {
         if (error instanceof Error) {
             res.status(500).json({
                 success: false,
-                message: `Error of getListOfUsers: ${error.message}`,
+                message: `[LOG] Error of getListOfUsers: ${error.message}`,
             });
             return;
         }
@@ -171,7 +171,7 @@ const adminGetAUser = async (req: Request, res: Response) => {
         if (error instanceof Error) {
             res.status(500).json({
                 success: false,
-                message: `Error of adminGetAUser: ${error.message}`,
+                message: `[LOG] Error of adminGetAUser: ${error.message}`,
             });
             return;
         }
@@ -230,7 +230,7 @@ const adminGetUserDemographics = async (req: Request, res: Response) => {
         if (error instanceof Error) {
             res.status(500).json({
                 success: false,
-                message: `Error of adminGetUserDemographics: ${error.message}`,
+                message: `[LOG] Error of adminGetUserDemographics: ${error.message}`,
             });
             return;
         }
