@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { tbl_users } from '../models/model-user';
+import { User } from '../models/model-user';
 
 export interface IAuthRequest extends Request {
     _id?: string;
@@ -34,7 +34,7 @@ const verifyToken = async (req: IAuthRequest, res: Response, next: NextFunction)
             });
             return;
         }
-        const user = await tbl_users.findById(verify._id);
+        const user = await User.findById(verify._id);
         if (!user) {
             res.status(401).json({
                 success: false,
