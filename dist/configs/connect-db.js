@@ -24,9 +24,11 @@ const connectDB = () => __awaiter(void 0, void 0, void 0, function* () {
             connectTimeoutMS: 5000,
             serverSelectionTimeoutMS: 5000,
         });
-        console.log('[LOG] MongoDB connected. VERSION:', db_connection.version);
-        console.log('------------------------------------------------------------------------------');
-        return;
+        if (db_connection) {
+            console.log('[LOG] MongoDB connected. VERSION:', db_connection.version);
+            console.log('------------------------------------------------------------------------------');
+            return;
+        }
     }
     catch (error) {
         if (error instanceof Error) {
