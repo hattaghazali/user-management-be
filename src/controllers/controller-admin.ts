@@ -4,8 +4,10 @@ import jwt from 'jsonwebtoken';
 
 import { User } from '../models/model-user';
 import { IReqUser } from '../types/type-controller';
+import connectDB from '../configs/connect-db';
 
 const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response, next: NextFunction) => {
+    await connectDB();
     try {
         const { email, password } = req.body;
 
