@@ -8,26 +8,22 @@ const connectDB = async () => {
             return;
         }
 
+        if (mongoose.connection.readyState === 2) {
+            console.log('[LOG] Connection in progress, waiting...');
+            await mongoose.connection.asPromise();
+            return mongoose.connection;
+        }
+
         const db_connection = await mongoose.connect(configs.mongo_url, {
-            connectTimeoutMS: 5000,
-            serverSelectionTimeoutMS: 5000,
+            connectTimeoutMS: 10000,
+            serverSelectionTimeoutMS: 10000,
         });
 
-        if (db_connection) {
-            console.log('[LOG] MongoDB connected. VERSION:', db_connection.version);
-            console.log(
-                '------------------------------------------------------------------------------'
-            );
-            return;
-        }
-
-        if (!db_connection) {
-            console.log('[LOG] MongoDB connection issues.');
-            console.log(
-                '------------------------------------------------------------------------------'
-            );
-            return;
-        }
+        console.log('[LOG] MongoDB connected. VERSION:', mongoose.version);
+        console.log(
+            '------------------------------------------------------------------------------'
+        );
+        return db_connection;
     } catch (error) {
         if (error instanceof Error) {
             console.error('[LOG] MongoDB connection issues.', error);
