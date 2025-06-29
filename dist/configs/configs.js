@@ -6,20 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MONGO_URL = exports.MONGO_HOST = exports.MONGO_DB_NAME = exports.MONGO_PASSWORD = exports.MONGO_USER = exports.API_BASE = exports.SERVER_PORT = exports.BRUH = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
 // Determine the environment
 const nodeEnv = process.env.NODE_ENV;
 // Set the path to the appropriate .env file based on NODE_ENV
 let envPath;
 switch (nodeEnv) {
     case 'production':
-        envPath =
-            path_1.default.resolve(__dirname, '../../.env.production') ||
-                path_1.default.resolve(__dirname, '../../.env');
-        if (!fs_1.default.existsSync(envPath)) {
-            console.error(`.env.production not found at ${envPath}`);
-            process.exit(1);
-        }
+        envPath = path_1.default.resolve(__dirname, '../../.env');
         break;
     case 'staging':
         envPath = path_1.default.resolve(__dirname, '../../.env.staging');
