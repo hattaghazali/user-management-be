@@ -2,14 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import { tbl_users } from '../models/model-user';
+import { User } from '../models/model-user';
 import { IReqUser } from '../types/type-controller';
 
 const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response, next: NextFunction) => {
     try {
         const { email, password } = req.body;
 
-        const getUser = await tbl_users.findOne({ u_email: email });
+        const getUser = await User.findOne({ u_email: email });
 
         if (!getUser) {
             res.status(400).json({
@@ -29,12 +29,9 @@ const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response, next: N
         const accessToken = jwt.sign({ _id: getUser._id }, 'SECRET', {
             expiresIn: '1d',
         });
-        const refreshToken = jwt.sign({ _id: getUser._id }, 'SECRET', {
-            expiresIn: '180d',
-        });
 
-        if (accessToken && refreshToken) {
-            res.status(200).json({ accessToken, refreshToken });
+        if (accessToken) {
+            res.status(200).json({ accessToken });
             return;
         }
     } catch (error) {
@@ -52,7 +49,7 @@ const adminRegisterAUser = async (req: Request<{}, {}, IReqUser>, res: Response)
     try {
         const { email, password, name, status, gender, occupation, state } = req.body;
 
-        const findUser = await tbl_users.findOne({ u_email: email });
+        const findUser = await User.findOne({ u_email: email });
 
         if (findUser) {
             res.status(400).json({
@@ -65,7 +62,7 @@ const adminRegisterAUser = async (req: Request<{}, {}, IReqUser>, res: Response)
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const createUser = await tbl_users.create({
+        const createUser = await User.create({
             u_email: email,
             u_password: hashedPassword,
             u_name: name,
@@ -117,9 +114,8 @@ const adminGetUsers = async (req: Request, res: Response) => {
         };
 
         const [totalUsersCount, users] = await Promise.all([
-            tbl_users.countDocuments(findQuery),
-            tbl_users
-                .find(findQuery)
+            User.countDocuments(findQuery),
+            User.find(findQuery)
                 .select('u_name u_email u_occupation u_state u_status')
                 .skip(skip)
                 .limit(limit)
@@ -157,8 +153,7 @@ const adminGetAUser = async (req: Request, res: Response) => {
         const userID = req.params.id;
         console.log(userID);
 
-        const getUserDetails = await tbl_users
-            .findById(userID)
+        const getUserDetails = await User.findById(userID)
             .select('u_name u_email u_gender u_occupation u_state u_status createdAt updatedAt')
             .lean();
         if (getUserDetails) {
@@ -200,20 +195,20 @@ const adminGetUserDemographics = async (req: Request, res: Response) => {
             totalOccupationStudent,
             totalOccupationEmploy,
         ] = await Promise.all([
-            tbl_users.countDocuments(dateFilter),
-            tbl_users.countDocuments({
+            User.countDocuments(dateFilter),
+            User.countDocuments({
                 u_gender: 1,
                 ...dateFilter,
             }),
-            tbl_users.countDocuments({
+            User.countDocuments({
                 u_gender: 2,
                 ...dateFilter,
             }),
-            tbl_users.countDocuments({
+            User.countDocuments({
                 u_occupation: 1,
                 ...dateFilter,
             }),
-            tbl_users.countDocuments({
+            User.countDocuments({
                 u_occupation: 2,
                 ...dateFilter,
             }),
