@@ -1,24 +1,28 @@
-import mongoose from 'mongoose'
-import configs from './configs'
+import mongoose from 'mongoose';
+import configs from './configs';
 
 const connectDB = async () => {
     try {
         if (mongoose.connection.readyState === 1) {
-            console.log('LOG: Already connected to MongoDB')
-            return
+            console.log('LOG: Already connected to MongoDB.');
+            return;
         }
 
         const db_connection = await mongoose.connect(configs.mongo_url, {
             connectTimeoutMS: 5000,
             serverSelectionTimeoutMS: 5000,
-        })
+        });
+        console.log('[LOG] MongoDB connected. VERSION:', db_connection.version);
         console.log(
-            'LOG: Connected to MongoDB! Version ',
-            db_connection.version
-        )
+            '------------------------------------------------------------------------------'
+        );
+        return;
     } catch (error) {
-        console.error('LOG: DB Connection Error! ', error)
+        if (error instanceof Error) {
+            console.error('[LOG] MongoDB connection issues.', error);
+            return;
+        }
     }
-}
+};
 
-export default connectDB
+export default connectDB;

@@ -1,13 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
-import {
-    EGender,
-    EOccupation,
-    EState,
-    EStatus,
-    IUser,
-} from '../types/type-user';
+import { EGender, EOccupation, EState, EStatus, IUser } from '../types/type-user';
 
-const userSchema = new Schema<IUser>(
+const user_schema = new Schema<IUser>(
     {
         u_email: { type: String, required: true },
         u_password: { type: String, required: true },
@@ -20,4 +14,4 @@ const userSchema = new Schema<IUser>(
     { timestamps: true }
 );
 
-export const User = mongoose.model<IUser>('tbl_users', userSchema);
+export const tbl_users = mongoose.model<IUser>('tbl_users', user_schema);
