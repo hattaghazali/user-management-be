@@ -1,9 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/model-user';
+import { IUser } from '../types/type-user';
 
 export interface IAuthRequest extends Request {
-    _id?: string;
+    user?: IUser;
 }
 
 const verifyToken = async (req: IAuthRequest, res: Response, next: NextFunction) => {
@@ -26,7 +27,7 @@ const verifyToken = async (req: IAuthRequest, res: Response, next: NextFunction)
             return;
         }
 
-        const verify = jwt.verify(accessToken, 'SECRET') as IAuthRequest;
+        const verify = jwt.verify(accessToken, 'SECRET') as { _id: string };
         if (!verify) {
             res.status(401).json({
                 success: false,
@@ -34,7 +35,9 @@ const verifyToken = async (req: IAuthRequest, res: Response, next: NextFunction)
             });
             return;
         }
-        const user = await User.findById(verify._id);
+
+        // const user = await User.findById({ _id: verify.user?._id });
+        const user = await User.findById({ _id: verify._id }).select('-u_password');
         if (!user) {
             res.status(401).json({
                 success: false,
@@ -43,7 +46,7 @@ const verifyToken = async (req: IAuthRequest, res: Response, next: NextFunction)
             return;
         }
 
-        req._id = user._id;
+        req.user = user;
         next();
     } catch (error) {
         if (error instanceof Error) {
