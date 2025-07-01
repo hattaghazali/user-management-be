@@ -41,7 +41,8 @@ const verifyToken = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
             });
             return;
         }
-        const user = yield model_user_1.User.findById(verify._id);
+        // const user = await User.findById({ _id: verify.user?._id });
+        const user = yield model_user_1.User.findById({ _id: verify._id }).select('-u_password');
         if (!user) {
             res.status(401).json({
                 success: false,
@@ -49,7 +50,7 @@ const verifyToken = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
             });
             return;
         }
-        req._id = user._id;
+        req.user = user;
         next();
     }
     catch (error) {

@@ -9,6 +9,7 @@ const mware_vertifytoken_1 = __importDefault(require("../middlewares/mware-verti
 // START: Admin Routes
 const router = (0, express_1.Router)();
 router.post('/login', controller_admin_1.adminLogin);
+router.get('/get-info', mware_vertifytoken_1.default, controller_admin_1.adminGetInfo);
 router.get('/demographics', mware_vertifytoken_1.default, controller_admin_1.adminGetUserDemographics);
 router.get('/user/list-users', mware_vertifytoken_1.default, controller_admin_1.adminGetUsers);
 router.get('/user/:id', mware_vertifytoken_1.default, controller_admin_1.adminGetAUser);

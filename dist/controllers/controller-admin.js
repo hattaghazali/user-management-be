@@ -12,11 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.adminGetAUser = exports.adminGetUserDemographics = exports.adminRegisterAUser = exports.adminLogin = exports.adminGetUsers = void 0;
+exports.adminGetInfo = exports.adminGetAUser = exports.adminGetUserDemographics = exports.adminRegisterAUser = exports.adminLogin = exports.adminGetUsers = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const model_user_1 = require("../models/model-user");
-const adminLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const connect_db_1 = __importDefault(require("../configs/connect-db"));
+const adminLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, connect_db_1.default)();
     try {
         const { email, password } = req.body;
         const getUser = yield model_user_1.User.findOne({ u_email: email });
@@ -51,6 +53,14 @@ const adminLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.adminLogin = adminLogin;
+const adminGetInfo = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!req.user) {
+        res.status(401).json({ success: false, message: 'User not found' });
+        return;
+    }
+    res.json(req.user);
+});
+exports.adminGetInfo = adminGetInfo;
 const adminRegisterAUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password, name, status, gender, occupation, state } = req.body;
