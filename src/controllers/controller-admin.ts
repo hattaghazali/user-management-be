@@ -5,8 +5,13 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/model-user';
 import { IReqUser } from '../types/type-controller';
 import connectDB from '../configs/connect-db';
+import { IUser } from '../types/type-user';
 
-const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response, next: NextFunction) => {
+export interface IAuthRequest extends Request {
+    user?: IUser;
+}
+
+const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response) => {
     await connectDB();
     try {
         const { email, password } = req.body;
@@ -45,6 +50,14 @@ const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response, next: N
             return;
         }
     }
+};
+
+const adminGetInfo = async (req: IAuthRequest, res: Response) => {
+    if (!req.user) {
+        res.status(401).json({ success: false, message: 'User not found' });
+        return;
+    }
+    res.json(req.user);
 };
 
 const adminRegisterAUser = async (req: Request<{}, {}, IReqUser>, res: Response) => {
@@ -234,4 +247,11 @@ const adminGetUserDemographics = async (req: Request, res: Response) => {
     }
 };
 
-export { adminGetUsers, adminLogin, adminRegisterAUser, adminGetUserDemographics, adminGetAUser };
+export {
+    adminGetUsers,
+    adminLogin,
+    adminRegisterAUser,
+    adminGetUserDemographics,
+    adminGetAUser,
+    adminGetInfo,
+};
