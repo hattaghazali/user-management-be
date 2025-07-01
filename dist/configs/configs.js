@@ -29,7 +29,7 @@ exports.MONGO_USER = process.env.MONGO_USER;
 exports.MONGO_PASSWORD = process.env.MONGO_PASSWORD;
 exports.MONGO_DB_NAME = process.env.MONGO_DB_NAME;
 exports.MONGO_HOST = process.env.MONGO_HOST;
-exports.MONGO_URL = `mongodb+srv://${exports.MONGO_USER}:${exports.MONGO_PASSWORD}@${exports.MONGO_HOST}/${exports.MONGO_DB_NAME}`;
+exports.MONGO_URL = `mongodb+srv://${exports.MONGO_USER}:${exports.MONGO_PASSWORD}@${exports.MONGO_HOST}/${exports.MONGO_DB_NAME}?retryWrites=true`;
 const configs = {
     bruh: exports.BRUH,
     port: exports.SERVER_PORT,
