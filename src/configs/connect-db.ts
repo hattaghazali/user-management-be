@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import configs from './configs';
+import { CONST_MONGO_URL } from './constants';
 
 const connectDB = async () => {
     try {
@@ -14,7 +14,7 @@ const connectDB = async () => {
             return mongoose.connection;
         }
 
-        const db_connection = await mongoose.connect(configs.mongo_url, {
+        const db_connection = await mongoose.connect(CONST_MONGO_URL, {
             connectTimeoutMS: 10000,
             serverSelectionTimeoutMS: 10000,
         });
