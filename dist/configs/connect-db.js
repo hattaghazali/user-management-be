@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
-const configs_1 = __importDefault(require("./configs"));
+const constants_1 = require("./constants");
 const connectDB = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (mongoose_1.default.connection.readyState === 1) {
@@ -25,7 +25,7 @@ const connectDB = () => __awaiter(void 0, void 0, void 0, function* () {
             yield mongoose_1.default.connection.asPromise();
             return mongoose_1.default.connection;
         }
-        const db_connection = yield mongoose_1.default.connect(configs_1.default.mongo_url, {
+        const db_connection = yield mongoose_1.default.connect(constants_1.CONST_MONGO_URL, {
             connectTimeoutMS: 10000,
             serverSelectionTimeoutMS: 10000,
         });
