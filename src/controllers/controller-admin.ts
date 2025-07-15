@@ -29,7 +29,7 @@ const adminLogin = async (req: Request<{}, {}, IReqUser>, res: Response) => {
         const passwordMatch = await bcrypt.compare(password, getUser.u_password);
 
         if (!passwordMatch) {
-            res.status(401).json({ error: 'Invalid credentials' });
+            res.status(401).json({ message: 'Invalid credentials' });
             return;
         }
 
@@ -120,7 +120,7 @@ const adminGetUsers = async (req: Request, res: Response) => {
         }
 
         // const limit = parseInt(req.query.limit as string) || 5;
-        const limit = 5;
+        const limit = 10;
         const skip = (page - 1) * limit;
 
         const findQuery = {
@@ -172,10 +172,7 @@ const adminGetAUser = async (req: Request, res: Response) => {
             .select('u_name u_email u_gender u_occupation u_state u_status createdAt updatedAt')
             .lean();
         if (getUserDetails) {
-            res.status(200).json({
-                success: true,
-                getUserDetails,
-            });
+            res.status(200).json(getUserDetails);
         }
     } catch (error) {
         if (error instanceof Error) {
@@ -189,26 +186,51 @@ const adminGetAUser = async (req: Request, res: Response) => {
 };
 
 const adminGetUserDemographics = async (req: Request, res: Response) => {
-    const localDateStartOfDay = new Date(2024, 11, 31, 0, 0, 0, 0);
-    const localDateEndOfDay = new Date(2024, 11, 31, 23, 59, 59, 999);
-    const isoStartOfDay = localDateStartOfDay.toISOString();
-    const isoEndOfDay = localDateEndOfDay.toISOString();
+    const defaultStart = new Date(2024, 11, 31, 0, 0, 0, 0);
+    const defaultEnd = new Date(2024, 11, 31, 23, 59, 59, 999);
 
     const { date_from, date_to } = req.query;
+
+    // Parse date_from and date_to, adjusting to cover full month
+    let startDate = defaultStart;
+    let endDate = defaultEnd;
+
+    if (date_from && date_to) {
+        const from = new Date(date_from as string);
+        const to = new Date(date_to as string);
+        if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
+            // Set startDate to first day of the month of date_from at 00:00:00.000
+            startDate = new Date(from.getFullYear(), from.getMonth() + 1, 1, 0, 0, 0, 0);
+            // Set endDate to last day of the month of date_to at 23:59:59.999
+            endDate = new Date(to.getFullYear(), to.getMonth() + 1, 0, 23, 59, 59, 999);
+        } else {
+            res.status(400).json({
+                success: false,
+                message: '[LOG] Invalid date format provided',
+            });
+            return;
+        }
+    }
+
     const dateFilter = {
         createdAt: {
-            $gte: date_from || isoStartOfDay,
-            $lte: date_to || isoEndOfDay,
+            $gte: startDate,
+            $lte: endDate,
         },
     };
 
+    // Get the year for the graph
+    const year = startDate.getFullYear();
+
     try {
+        // Aggregate counts for total users, males, females, occupations, and monthly gender data
         const [
             totalUsers,
             totalMales,
             totalFemales,
             totalOccupationStudent,
             totalOccupationEmploy,
+            monthlyGenderData,
         ] = await Promise.all([
             User.countDocuments(dateFilter),
             User.countDocuments({
@@ -227,7 +249,57 @@ const adminGetUserDemographics = async (req: Request, res: Response) => {
                 u_occupation: 2,
                 ...dateFilter,
             }),
+            // Aggregate male and female counts by month within the specified date range
+            User.aggregate([
+                {
+                    $match: dateFilter,
+                },
+                {
+                    $group: {
+                        _id: {
+                            $month: {
+                                date: '$createdAt',
+                                timezone: 'UTC',
+                            },
+                        },
+                        male_user: {
+                            $sum: { $cond: [{ $eq: ['$u_gender', 1] }, 1, 0] },
+                        },
+                        female_user: {
+                            $sum: { $cond: [{ $eq: ['$u_gender', 2] }, 1, 0] },
+                        },
+                    },
+                },
+                {
+                    $sort: { _id: 1 },
+                },
+            ]),
         ]);
+
+        // Create array of all months (1-12) with default values
+        const monthNames = [
+            'jan',
+            'feb',
+            'mar',
+            'apr',
+            'may',
+            'jun',
+            'jul',
+            'aug',
+            'sep',
+            'oct',
+            'nov',
+            'dec',
+        ];
+        const graph = monthNames.map((month, index) => {
+            const monthData = monthlyGenderData.find((data) => data._id === index + 1);
+            return {
+                month,
+                male_user: monthData ? monthData.male_user : 0,
+                female_user: monthData ? monthData.female_user : 0,
+            };
+        });
+
         res.status(200).json({
             success: true,
             total_users: totalUsers,
@@ -235,6 +307,7 @@ const adminGetUserDemographics = async (req: Request, res: Response) => {
             total_female: totalFemales,
             total_occupation_student: totalOccupationStudent,
             total_occupation_employ: totalOccupationEmploy,
+            graph,
         });
     } catch (error) {
         if (error instanceof Error) {
