@@ -31,7 +31,7 @@ const adminLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         }
         const passwordMatch = yield bcrypt_1.default.compare(password, getUser.u_password);
         if (!passwordMatch) {
-            res.status(401).json({ error: 'Invalid credentials' });
+            res.status(401).json({ message: 'Invalid credentials' });
             return;
         }
         const accessToken = jsonwebtoken_1.default.sign({ _id: getUser._id }, 'SECRET', {
@@ -115,7 +115,7 @@ const adminGetUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             statesToQuery = statesArray;
         }
         // const limit = parseInt(req.query.limit as string) || 5;
-        const limit = 5;
+        const limit = 10;
         const skip = (page - 1) * limit;
         const findQuery = Object.assign(Object.assign({}, (name && { u_name: { $regex: name, $options: 'i' } })), { u_state: states !== undefined ? { $in: statesToQuery } : { $in: VALID_STATES } });
         const [totalUsersCount, users] = yield Promise.all([
@@ -155,15 +155,11 @@ exports.adminGetUsers = adminGetUsers;
 const adminGetAUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userID = req.params.id;
-        console.log(userID);
         const getUserDetails = yield model_user_1.User.findById(userID)
             .select('u_name u_email u_gender u_occupation u_state u_status createdAt updatedAt')
             .lean();
         if (getUserDetails) {
-            res.status(200).json({
-                success: true,
-                getUserDetails,
-            });
+            res.status(200).json(getUserDetails);
         }
     }
     catch (error) {
@@ -178,25 +174,92 @@ const adminGetAUser = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.adminGetAUser = adminGetAUser;
 const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const localDateStartOfDay = new Date(2024, 11, 31, 0, 0, 0, 0);
-    const localDateEndOfDay = new Date(2024, 11, 31, 23, 59, 59, 999);
-    const isoStartOfDay = localDateStartOfDay.toISOString();
-    const isoEndOfDay = localDateEndOfDay.toISOString();
+    const defaultStart = new Date(2024, 11, 31, 0, 0, 0, 0);
+    const defaultEnd = new Date(2024, 11, 31, 23, 59, 59, 999);
     const { date_from, date_to } = req.query;
+    // Parse date_from and date_to, adjusting to cover full month
+    let startDate = defaultStart;
+    let endDate = defaultEnd;
+    if (date_from && date_to) {
+        const from = new Date(date_from);
+        const to = new Date(date_to);
+        if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
+            // Set startDate to first day of the month of date_from at 00:00:00.000
+            startDate = new Date(from.getFullYear(), from.getMonth() + 1, 1, 0, 0, 0, 0);
+            // Set endDate to last day of the month of date_to at 23:59:59.999
+            endDate = new Date(to.getFullYear(), to.getMonth() + 1, 0, 23, 59, 59, 999);
+        }
+        else {
+            res.status(400).json({
+                success: false,
+                message: '[LOG] Invalid date format provided',
+            });
+            return;
+        }
+    }
     const dateFilter = {
         createdAt: {
-            $gte: date_from || isoStartOfDay,
-            $lte: date_to || isoEndOfDay,
+            $gte: startDate,
+            $lte: endDate,
         },
     };
     try {
-        const [totalUsers, totalMales, totalFemales, totalOccupationStudent, totalOccupationEmploy,] = yield Promise.all([
+        // Aggregate counts for total users, males, females, occupations, and monthly gender data
+        const [totalUsers, totalMales, totalFemales, totalOccupationStudent, totalOccupationEmploy, monthlyGenderData,] = yield Promise.all([
             model_user_1.User.countDocuments(dateFilter),
             model_user_1.User.countDocuments(Object.assign({ u_gender: 1 }, dateFilter)),
             model_user_1.User.countDocuments(Object.assign({ u_gender: 2 }, dateFilter)),
             model_user_1.User.countDocuments(Object.assign({ u_occupation: 1 }, dateFilter)),
             model_user_1.User.countDocuments(Object.assign({ u_occupation: 2 }, dateFilter)),
+            // Aggregate male and female counts by month within the specified date range
+            model_user_1.User.aggregate([
+                {
+                    $match: dateFilter,
+                },
+                {
+                    $group: {
+                        _id: {
+                            $month: {
+                                date: '$createdAt',
+                                timezone: 'UTC',
+                            },
+                        },
+                        male_user: {
+                            $sum: { $cond: [{ $eq: ['$u_gender', 1] }, 1, 0] },
+                        },
+                        female_user: {
+                            $sum: { $cond: [{ $eq: ['$u_gender', 2] }, 1, 0] },
+                        },
+                    },
+                },
+                {
+                    $sort: { _id: 1 },
+                },
+            ]),
         ]);
+        // Create array of all months (1-12) with default values
+        const monthNames = [
+            'jan',
+            'feb',
+            'mar',
+            'apr',
+            'may',
+            'jun',
+            'jul',
+            'aug',
+            'sep',
+            'oct',
+            'nov',
+            'dec',
+        ];
+        const graph = monthNames.map((month, index) => {
+            const monthData = monthlyGenderData.find((data) => data._id === index + 1);
+            return {
+                month,
+                male_user: monthData ? monthData.male_user : 0,
+                female_user: monthData ? monthData.female_user : 0,
+            };
+        });
         res.status(200).json({
             success: true,
             total_users: totalUsers,
@@ -204,6 +267,7 @@ const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0,
             total_female: totalFemales,
             total_occupation_student: totalOccupationStudent,
             total_occupation_employ: totalOccupationEmploy,
+            graph,
         });
     }
     catch (error) {
