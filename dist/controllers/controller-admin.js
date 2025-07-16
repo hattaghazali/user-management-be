@@ -182,9 +182,11 @@ const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0,
     // Parse date_from as a Date object (sets time to 00:00:00.000)
     const startDate = new Date(date_from);
     startDate.setHours(0, 0, 0, 0);
+    console.log('start date', startDate);
     // Parse date_to and set time to 15:59:59.999
     const endDate = new Date(date_to);
     endDate.setHours(23, 59, 59, 999);
+    console.log('end date', endDate);
     const dateFilter = {
         createdAt: {
             $gte: startDate || isoStartOfDay,
@@ -209,7 +211,7 @@ const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0,
                         _id: {
                             $month: {
                                 date: '$createdAt',
-                                timezone: 'UTC',
+                                timezone: 'Asia/Singapore',
                             },
                         },
                         male_user: {
