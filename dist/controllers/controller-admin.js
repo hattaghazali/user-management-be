@@ -174,34 +174,59 @@ const adminGetAUser = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.adminGetAUser = adminGetAUser;
 const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const localDateStartOfDay = new Date(2024, 11, 31, 0, 0, 0, 0);
-    const localDateEndOfDay = new Date(2024, 11, 31, 23, 59, 59, 999);
-    const isoStartOfDay = localDateStartOfDay.toISOString();
-    const isoEndOfDay = localDateEndOfDay.toISOString();
     const { date_from, date_to } = req.query;
-    // Parse date_from as a Date object (sets time to 00:00:00.000)
-    const startDate = new Date(date_from);
-    startDate.setHours(0, 0, 0, 0);
-    console.log('start date', startDate);
-    // Parse date_to and set time to 15:59:59.999
-    const endDate = new Date(date_to);
-    endDate.setHours(23, 59, 59, 999);
-    console.log('end date', endDate);
+    // Validate query parameters
+    if (typeof date_from !== 'string' || typeof date_to !== 'string') {
+        res.status(400).json({ error: 'Invalid date_from or date_to format' });
+        return;
+    }
+    // Parse date in either DD/MM/YYYY or YYYY-MM-DD format
+    const parseDate = (dateStr) => {
+        if (dateStr.includes('/')) {
+            // Handle DD/MM/YYYY
+            const [day, month, year] = dateStr.split('/').map(Number);
+            return new Date(year, month - 1, day); // Months are 0-based
+        }
+        else if (dateStr.includes('-')) {
+            // Handle YYYY-MM-DD
+            return new Date(dateStr);
+        }
+        throw new Error('Invalid date format');
+    };
+    // Parse dates
+    let startDate, endDate;
+    try {
+        startDate = parseDate(date_from);
+        endDate = parseDate(date_to);
+    }
+    catch (error) {
+        res.status(400).json({ error: 'Invalid date format, expected DD/MM/YYYY or YYYY-MM-DD' });
+        return;
+    }
+    // Validate parsed dates
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        res.status(400).json({ error: 'Invalid date_from or date_to' });
+        return;
+    }
+    // Adjust startDate to previous day and set UTC+8 times
+    startDate.setDate(startDate.getDate() - 1); // Move to 2024-12-30 for 2024-12-31
+    startDate.setUTCHours(16, 0, 0, 0); // 00:00:00.000 UTC+8 = 2024-12-30T16:00:00.000Z
+    endDate.setUTCHours(15, 59, 59, 999); // 23:59:59.999 UTC+8 = 2024-12-31T15:59:59.999Z
+    console.log('start date', startDate.toISOString()); // Should log 2024-12-30T16:00:00.000Z
+    console.log('end date', endDate.toISOString()); // Should log 2024-12-31T15:59:59.999Z
     const dateFilter = {
         createdAt: {
-            $gte: startDate || isoStartOfDay,
-            $lte: endDate || isoEndOfDay,
+            $gte: startDate,
+            $lte: endDate,
         },
     };
     try {
-        // Aggregate counts for total users, males, females, occupations, and monthly gender data
         const [totalUsers, totalMales, totalFemales, totalOccupationStudent, totalOccupationEmploy, monthlyGenderData,] = yield Promise.all([
             model_user_1.User.countDocuments(dateFilter),
             model_user_1.User.countDocuments(Object.assign({ u_gender: 1 }, dateFilter)),
             model_user_1.User.countDocuments(Object.assign({ u_gender: 2 }, dateFilter)),
             model_user_1.User.countDocuments(Object.assign({ u_occupation: 1 }, dateFilter)),
             model_user_1.User.countDocuments(Object.assign({ u_occupation: 2 }, dateFilter)),
-            // Aggregate male and female counts by month within the specified date range
             model_user_1.User.aggregate([
                 {
                     $match: dateFilter,
@@ -211,7 +236,7 @@ const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0,
                         _id: {
                             $month: {
                                 date: '$createdAt',
-                                timezone: 'Asia/Singapore',
+                                timezone: 'Asia/Singapore', // Use UTC+8 for month grouping
                             },
                         },
                         male_user: {
@@ -227,7 +252,6 @@ const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0,
                 },
             ]),
         ]);
-        // Create array of all months (1-12) with default values
         const monthNames = [
             'jan',
             'feb',
@@ -266,7 +290,6 @@ const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0,
                 success: false,
                 message: `[LOG] Error of adminGetUserDemographics: ${error.message}`,
             });
-            return;
         }
     }
 });
