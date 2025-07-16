@@ -196,11 +196,13 @@ const adminGetUserDemographics = async (req: Request, res: Response) => {
     const startDate = new Date(date_from as string);
     startDate.setHours(0, 0, 0, 0);
     startDate.toISOString();
+    console.log('start date', startDate.toISOString());
 
     // Parse date_to and set time to 15:59:59.999
     const endDate = new Date(date_to as string);
     endDate.setHours(23, 59, 59, 999);
     endDate.toISOString();
+    console.log('end date', endDate.toISOString());
 
     const dateFilter = {
         createdAt: {
