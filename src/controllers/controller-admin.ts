@@ -244,6 +244,7 @@ const adminGetUserDemographics = async (req: Request, res: Response) => {
                         _id: {
                             $month: {
                                 date: '$createdAt',
+                                timezone: 'UTC', // Explicitly set to UTC to avoid server timezone issues
                             },
                         },
                         male_user: {

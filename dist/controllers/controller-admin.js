@@ -209,6 +209,7 @@ const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0,
                         _id: {
                             $month: {
                                 date: '$createdAt',
+                                timezone: 'UTC', // Explicitly set to UTC to avoid server timezone issues
                             },
                         },
                         male_user: {
