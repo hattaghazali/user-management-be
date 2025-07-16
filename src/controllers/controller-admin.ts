@@ -194,14 +194,12 @@ const adminGetUserDemographics = async (req: Request, res: Response) => {
 
     // Parse date_from as a Date object (sets time to 00:00:00.000)
     const startDate = new Date(date_from as string);
-    startDate.setHours(0, 0, 0, 0);
-    startDate.toISOString();
+    startDate.setUTCHours(0, 0, 0, 0);
     console.log('start date', startDate.toISOString());
 
     // Parse date_to and set time to 15:59:59.999
     const endDate = new Date(date_to as string);
-    endDate.setHours(23, 59, 59, 999);
-    endDate.toISOString();
+    endDate.setUTCHours(23, 59, 59, 999);
     console.log('end date', endDate.toISOString());
 
     const dateFilter = {
