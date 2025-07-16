@@ -174,33 +174,21 @@ const adminGetAUser = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.adminGetAUser = adminGetAUser;
 const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const defaultStart = new Date(2024, 11, 31, 0, 0, 0, 0);
-    const defaultEnd = new Date(2024, 11, 31, 23, 59, 59, 999);
+    const localDateStartOfDay = new Date(2024, 11, 31, 0, 0, 0, 0);
+    const localDateEndOfDay = new Date(2024, 11, 31, 23, 59, 59, 999);
+    const isoStartOfDay = localDateStartOfDay.toISOString();
+    const isoEndOfDay = localDateEndOfDay.toISOString();
     const { date_from, date_to } = req.query;
-    // Parse date_from and date_to, adjusting to cover full month
-    let startDate = defaultStart;
-    let endDate = defaultEnd;
-    if (date_from && date_to) {
-        const from = new Date(date_from);
-        const to = new Date(date_to);
-        if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
-            // Set startDate to first day of the month of date_from at 00:00:00.000
-            startDate = new Date(from.getFullYear(), from.getMonth() + 1, 1, 0, 0, 0, 0);
-            // Set endDate to last day of the month of date_to at 23:59:59.999
-            endDate = new Date(to.getFullYear(), to.getMonth() + 1, 0, 23, 59, 59, 999);
-        }
-        else {
-            res.status(400).json({
-                success: false,
-                message: '[LOG] Invalid date format provided',
-            });
-            return;
-        }
-    }
+    // Parse date_from as a Date object (sets time to 00:00:00.000)
+    const startDate = new Date(date_from);
+    startDate.setHours(0, 0, 0, 0);
+    // Parse date_to and set time to 15:59:59.999
+    const endDate = new Date(date_to);
+    endDate.setHours(23, 59, 59, 999);
     const dateFilter = {
         createdAt: {
-            $gte: startDate,
-            $lte: endDate,
+            $gte: startDate || isoStartOfDay,
+            $lte: endDate || isoEndOfDay,
         },
     };
     try {
@@ -221,7 +209,6 @@ const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0,
                         _id: {
                             $month: {
                                 date: '$createdAt',
-                                timezone: 'UTC',
                             },
                         },
                         male_user: {
