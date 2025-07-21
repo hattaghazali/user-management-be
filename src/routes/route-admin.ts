@@ -15,7 +15,8 @@ router.post('/login', adminLogin);
 router.get('/get-info', verifyToken, adminGetInfo);
 router.get('/demographics', verifyToken, adminGetUserDemographics);
 router.get('/user/list-users', verifyToken, adminGetUsers);
+router.get('/user/list-users-v2', adminGetUsers);
 router.get('/user/:id', verifyToken, adminGetAUser);
-router.post('/user/register-user', adminRegisterAUser);
+router.post('/user/register-user', verifyToken, adminRegisterAUser);
 
 export default router;
