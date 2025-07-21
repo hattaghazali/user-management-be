@@ -20,6 +20,8 @@ switch (nodeEnv) {
 // Load the .env file
 dotenv.config({ path: envPath });
 
+export const CONST_LIMIT_RECENT_USERS = 5 as number;
+
 export const CONST_BRUH = process.env.BRUH!;
 export const CONST_SERVER_PORT = process.env.SERVER_PORT!;
 export const CONST_API_BASE = process.env.API_BASE!;
