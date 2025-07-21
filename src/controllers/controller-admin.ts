@@ -5,7 +5,8 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/model-user';
 import { IReqUser } from '../types/type-controller';
 import connectDB from '../configs/connect-db';
-import { IUser } from '../types/type-user';
+import { EStatus, IUser } from '../types/type-user';
+import { CONST_LIMIT_RECENT_USERS } from '../configs/constants';
 
 export interface IAuthRequest extends Request {
     user?: IUser;
@@ -62,7 +63,7 @@ const adminGetInfo = async (req: IAuthRequest, res: Response) => {
 
 const adminRegisterAUser = async (req: Request<{}, {}, IReqUser>, res: Response) => {
     try {
-        const { email, password, name, status, gender, occupation, state } = req.body;
+        const { email, password, name, gender, occupation, state } = req.body;
 
         const findUser = await User.findOne({ u_email: email });
 
@@ -81,7 +82,7 @@ const adminRegisterAUser = async (req: Request<{}, {}, IReqUser>, res: Response)
             u_email: email,
             u_password: hashedPassword,
             u_name: name,
-            u_status: status,
+            u_status: EStatus.Active,
             u_gender: gender,
             u_occupation: occupation,
             u_state: state,
@@ -244,6 +245,7 @@ const adminGetUserDemographics = async (req: Request, res: Response) => {
             totalOccupationStudent,
             totalOccupationEmploy,
             monthlyGenderData,
+            latestTenUsersCreated,
         ] = await Promise.all([
             User.countDocuments(dateFilter),
             User.countDocuments({ u_gender: 1, ...dateFilter }),
@@ -274,6 +276,11 @@ const adminGetUserDemographics = async (req: Request, res: Response) => {
                     $sort: { _id: 1 },
                 },
             ]),
+            User.find()
+                .select('u_name u_email u_occupation u_state u_status')
+                .sort({ createdAt: -1 })
+                .limit(CONST_LIMIT_RECENT_USERS)
+                .exec(),
         ]);
 
         const monthNames = [
@@ -307,6 +314,7 @@ const adminGetUserDemographics = async (req: Request, res: Response) => {
             total_occupation_student: totalOccupationStudent,
             total_occupation_employ: totalOccupationEmploy,
             graph,
+            recent_users: latestTenUsersCreated,
         });
     } catch (error) {
         if (error instanceof Error) {
