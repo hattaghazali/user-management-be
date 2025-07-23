@@ -1,4 +1,4 @@
-import express, { Application } from 'express';
+import express, { Application, NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import connectDB from './configs/connect-db';
 import { CONST_API_BASE, CONST_BRUH, CONST_SERVER_PORT } from './configs/constants';
@@ -12,6 +12,10 @@ const app: Application = express();
 connectDB();
 
 // START: Middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+    console.log(`[API CALL] ${req.method} ${req.originalUrl} at ${new Date().toISOString()}`);
+    next();
+});
 app.use(cors(corsOptions));
 app.use(express.json());
 
