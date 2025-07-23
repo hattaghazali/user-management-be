@@ -23,6 +23,10 @@ const app = (0, express_1.default)();
 // START: MongoDB
 (0, connect_db_1.default)();
 // START: Middleware
+app.use((req, res, next) => {
+    console.log(`[API CALL] ${req.method} ${req.originalUrl} at ${new Date().toISOString()}`);
+    next();
+});
 app.use((0, cors_1.default)(mware_cors_1.default));
 app.use(express_1.default.json());
 // START: Routes

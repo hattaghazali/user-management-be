@@ -17,6 +17,8 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const model_user_1 = require("../models/model-user");
 const connect_db_1 = __importDefault(require("../configs/connect-db"));
+const type_user_1 = require("../types/type-user");
+const constants_1 = require("../configs/constants");
 const adminLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, connect_db_1.default)();
     try {
@@ -63,7 +65,7 @@ const adminGetInfo = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 exports.adminGetInfo = adminGetInfo;
 const adminRegisterAUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { email, password, name, status, gender, occupation, state } = req.body;
+        const { email, password, name, gender, occupation, state } = req.body;
         const findUser = yield model_user_1.User.findOne({ u_email: email });
         if (findUser) {
             res.status(400).json({
@@ -78,7 +80,7 @@ const adminRegisterAUser = (req, res) => __awaiter(void 0, void 0, void 0, funct
             u_email: email,
             u_password: hashedPassword,
             u_name: name,
-            u_status: status,
+            u_status: type_user_1.EStatus.Active,
             u_gender: gender,
             u_occupation: occupation,
             u_state: state,
@@ -221,7 +223,7 @@ const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0,
         },
     };
     try {
-        const [totalUsers, totalMales, totalFemales, totalOccupationStudent, totalOccupationEmploy, monthlyGenderData,] = yield Promise.all([
+        const [totalUsers, totalMales, totalFemales, totalOccupationStudent, totalOccupationEmploy, monthlyGenderData, latestTenUsersCreated,] = yield Promise.all([
             model_user_1.User.countDocuments(dateFilter),
             model_user_1.User.countDocuments(Object.assign({ u_gender: 1 }, dateFilter)),
             model_user_1.User.countDocuments(Object.assign({ u_gender: 2 }, dateFilter)),
@@ -251,6 +253,11 @@ const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0,
                     $sort: { _id: 1 },
                 },
             ]),
+            model_user_1.User.find()
+                .select('u_name u_email u_occupation u_state u_status')
+                .sort({ createdAt: -1 })
+                .limit(constants_1.CONST_LIMIT_RECENT_USERS)
+                .exec(),
         ]);
         const monthNames = [
             'jan',
@@ -282,6 +289,7 @@ const adminGetUserDemographics = (req, res) => __awaiter(void 0, void 0, void 0,
             total_occupation_student: totalOccupationStudent,
             total_occupation_employ: totalOccupationEmploy,
             graph,
+            recent_users: latestTenUsersCreated,
         });
     }
     catch (error) {
