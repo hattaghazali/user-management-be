@@ -37,12 +37,24 @@ exports.User = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const type_user_1 = require("../types/type-user");
 const userSchema = new mongoose_1.Schema({
-    u_email: { type: String, required: true },
-    u_password: { type: String, required: true },
-    u_name: { type: String },
-    u_gender: { type: Number, enum: type_user_1.EGender },
-    u_occupation: { type: Number, enum: type_user_1.EOccupation },
-    u_state: { type: Number, enum: type_user_1.EState },
-    u_status: { type: Number, enum: type_user_1.EStatus },
+    email: { type: String, required: true },
+    password: { type: String, required: true },
+    name: { type: String },
+    gender: { type: Number, enum: type_user_1.EGender },
+    occupation: { type: Number, enum: type_user_1.EOccupation },
+    state: { type: Number, enum: type_user_1.EState },
+    status: { type: Number, enum: type_user_1.EStatus },
+    avatar: {
+        public_id: {
+            type: String,
+            required: true,
+            default: 'user-pictures/dxoyhanhlve7j818kusy',
+        },
+        img_url: {
+            type: String,
+            required: true,
+            default: 'https://res.cloudinary.com/hattacloudinary/image/upload/v1754327277/user-pictures/dxoyhanhlve7j818kusy.jpg',
+        },
+    },
 }, { timestamps: true, collection: 'User' });
 exports.User = mongoose_1.default.model('User', userSchema);

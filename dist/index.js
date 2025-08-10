@@ -32,6 +32,26 @@ app.use(express_1.default.json());
 // START: Routes
 app.use('/api/admin', route_admin_1.default);
 app.use(mware_notfound_1.routeNotFound);
+// Global error-handling middleware (must be after all routes)
+// app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+//     // Handle Multer-specific errors and fileFilter errors
+//     if (
+//         err instanceof MulterError ||
+//         err.message === 'Unsupported file format. Only JPG and PNG are allowed.'
+//     ) {
+//         res.status(400).json({
+//             success: false,
+//             message: err.message || 'Invalid file upload request.',
+//         });
+//         return;
+//     }
+//     // Handle other errors
+//     res.status(err.status || 500).json({
+//         success: false,
+//         message: err.message || 'An unexpected error occurred.',
+//     });
+//     return;
+// });
 // START: Server
 app.listen(constants_1.CONST_SERVER_PORT, () => __awaiter(void 0, void 0, void 0, function* () {
     console.log('------------------------------------------------------------------------------');

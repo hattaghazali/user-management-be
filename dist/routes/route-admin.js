@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const controller_admin_1 = require("../controllers/controller-admin");
 const mware_vertifytoken_1 = __importDefault(require("../middlewares/mware-vertifytoken"));
+const cloudinary_1 = require("../configs/cloudinary");
 // START: Admin Routes
 const router = (0, express_1.Router)();
 router.post('/login', controller_admin_1.adminLogin);
@@ -14,5 +15,8 @@ router.get('/demographics', mware_vertifytoken_1.default, controller_admin_1.adm
 router.get('/user/list-users', mware_vertifytoken_1.default, controller_admin_1.adminGetUsers);
 router.get('/user/list-users-v2', controller_admin_1.adminGetUsers);
 router.get('/user/:id', mware_vertifytoken_1.default, controller_admin_1.adminGetAUser);
+router.patch('/user/edit/:id', mware_vertifytoken_1.default, controller_admin_1.adminEditAUserInfo);
 router.post('/user/register-user', mware_vertifytoken_1.default, controller_admin_1.adminRegisterAUser);
+router.put('/user/edit-image/:id', mware_vertifytoken_1.default, cloudinary_1.upload.single('pictureFile'), controller_admin_1.adminEditAUserImage);
+router.post('/user/upload-picture-test', cloudinary_1.upload.single('pictureFile'), controller_admin_1.adminUploadUserPicture);
 exports.default = router;

@@ -16,15 +16,15 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const constants_1 = require("./constants");
 const connectDB = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (mongoose_1.default.connection.readyState === 1) {
-            console.log('[LOG] Already connected to MongoDB.');
-            return;
-        }
-        if (mongoose_1.default.connection.readyState === 2) {
-            console.log('[LOG] Connection in progress, waiting...');
-            yield mongoose_1.default.connection.asPromise();
-            return mongoose_1.default.connection;
-        }
+        // if (mongoose.connection.readyState === 1) {
+        //     console.log('[LOG] Already connected to MongoDB.');
+        //     return;
+        // }
+        // if (mongoose.connection.readyState === 2) {
+        //     console.log('[LOG] Connection in progress, waiting...');
+        //     await mongoose.connection.asPromise();
+        //     return mongoose.connection;
+        // }
         const db_connection = yield mongoose_1.default.connect(constants_1.CONST_MONGO_URL, {
             connectTimeoutMS: 10000,
             serverSelectionTimeoutMS: 10000,
