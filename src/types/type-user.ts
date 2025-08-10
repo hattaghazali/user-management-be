@@ -36,13 +36,17 @@ export enum EStatus {
 
 export interface IUser extends Document {
     _id: string;
-    u_email: string;
-    u_password: string;
-    u_name: string;
-    u_gender: number;
-    u_occupation: number;
-    u_state: number;
-    u_status: EStatus;
+    email: string;
+    password: string;
+    name: string;
+    gender: number;
+    occupation: number;
+    state: number;
+    status: EStatus;
+    avatar: {
+        public_id: string;
+        img_url: string;
+    };
     createdAt: Date;
     updatedAt: Date;
 }
