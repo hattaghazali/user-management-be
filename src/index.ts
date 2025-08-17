@@ -1,5 +1,6 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
 import cors from 'cors';
+import bodyParser from 'body-parser';
 import connectDB from './configs/connect-db';
 import { CONST_API_BASE, CONST_BRUH, CONST_SERVER_PORT } from './configs/constants';
 import { routeNotFound } from './middlewares/mware-notfound';
@@ -19,6 +20,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 // START: Routes
 app.use('/api/admin', routeAdmin);
