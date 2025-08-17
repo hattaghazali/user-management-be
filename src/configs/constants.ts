@@ -21,7 +21,7 @@ switch (nodeEnv) {
 dotenv.config({ path: envPath });
 
 export const CONST_LIMIT_RECENT_USERS = 5 as number;
-export const CONST_LIMIT_USERS_PER_PAGE = 10 as number;
+export const CONST_LIMIT_USERS_PER_PAGE = 5 as number;
 
 export const CONST_CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME!;
 export const CONST_CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY!;
