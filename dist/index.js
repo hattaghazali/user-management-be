@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
+const body_parser_1 = __importDefault(require("body-parser"));
 const connect_db_1 = __importDefault(require("./configs/connect-db"));
 const constants_1 = require("./configs/constants");
 const mware_notfound_1 = require("./middlewares/mware-notfound");
@@ -29,6 +30,8 @@ app.use((req, res, next) => {
 });
 app.use((0, cors_1.default)(mware_cors_1.default));
 app.use(express_1.default.json());
+app.use(body_parser_1.default.urlencoded({ extended: false }));
+app.use(body_parser_1.default.json());
 // START: Routes
 app.use('/api/admin', route_admin_1.default);
 app.use(mware_notfound_1.routeNotFound);

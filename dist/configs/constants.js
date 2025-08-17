@@ -23,7 +23,7 @@ switch (nodeEnv) {
 // Load the .env file
 dotenv_1.default.config({ path: envPath });
 exports.CONST_LIMIT_RECENT_USERS = 5;
-exports.CONST_LIMIT_USERS_PER_PAGE = 10;
+exports.CONST_LIMIT_USERS_PER_PAGE = 5;
 exports.CONST_CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 exports.CONST_CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
 exports.CONST_CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;

@@ -67,6 +67,13 @@ exports.adminGetInfo = adminGetInfo;
 const adminRegisterAUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password, name, gender, occupation, state } = req.body;
+        if (!email || !password || !name || !gender || !occupation || !state) {
+            res.status(400).json({
+                success: false,
+                message: 'Missing required fields: email, password, name, gender, occupation, state',
+            });
+            return;
+        }
         const findUser = yield model_user_1.User.findOne({ email: email });
         if (findUser) {
             res.status(400).json({
@@ -77,6 +84,13 @@ const adminRegisterAUser = (req, res) => __awaiter(void 0, void 0, void 0, funct
         }
         const salt = yield bcrypt_1.default.genSalt(10);
         const hashedPassword = yield bcrypt_1.default.hash(password, salt);
+        if (!hashedPassword) {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to hash password',
+            });
+            return;
+        }
         const createUser = yield model_user_1.User.create({
             email: email,
             password: hashedPassword,
@@ -111,20 +125,39 @@ const adminEditAUserInfo = (req, res) => __awaiter(void 0, void 0, void 0, funct
             res.status(404).json({ success: false, message: 'User not found' });
             return;
         }
-        const { email, name, gender, occupation, state } = req.body;
-        // Validate and update user information
+        const { email, name, gender, occupation, state, status } = req.body;
+        if (email) {
+            const existingUser = yield model_user_1.User.findOne({ email: email });
+            if (existingUser) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Email already exists',
+                });
+                return;
+            }
+        }
+        const updatedFields = {};
         if (email)
-            user.email = email;
+            updatedFields.email = email;
         if (name)
-            user.name = name;
+            updatedFields.name = name;
         if (gender)
-            user.gender = gender;
+            updatedFields.gender = gender;
         if (occupation)
-            user.occupation = occupation;
+            updatedFields.occupation = occupation;
         if (state)
-            user.state = state;
-        yield user.save();
-        res.status(200).json({ message: 'User information updated successfully' });
+            updatedFields.state = state;
+        if (status)
+            updatedFields.status = status;
+        const updatedUser = yield model_user_1.User.findByIdAndUpdate(req.params.id, updatedFields, {
+            new: true,
+            runValidators: true,
+            select: '-password', // Exclude password from response
+        });
+        if (updatedUser) {
+            res.status(200).json(updatedUser);
+            return;
+        }
     }
     catch (error) {
         if (error instanceof Error) {
@@ -171,7 +204,7 @@ const adminEditAUserImage = (req, res) => __awaiter(void 0, void 0, void 0, func
 exports.adminEditAUserImage = adminEditAUserImage;
 const adminGetUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const page = parseInt(req.query.page) || 1;
+        const page = parseInt(req.query.page);
         const name = req.query.name;
         const gender = req.query.gender;
         const occupation = req.query.occupation;
@@ -179,10 +212,6 @@ const adminGetUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const status = req.query.status;
         const dateFrom = req.query.dateFrom;
         const dateTo = req.query.dateTo;
-        const VALID_GENDER = [1, 2];
-        const VALID_OCCUPATION = [1, 2];
-        const VALID_STATES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-        const VALID_STATUS = [1, 2];
         const limit = constants_1.CONST_LIMIT_USERS_PER_PAGE;
         const skip = (page - 1) * limit;
         let startDate, endDate;
@@ -220,7 +249,7 @@ const adminGetUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             const parsedStatuses = status.split(',').map(Number);
             newStatuses = parsedStatuses;
         }
-        const query = Object.assign(Object.assign({}, (name && { name: { $regex: name, $options: 'i' } })), { state: newStates.length > 0 ? { $in: newStates } : { $in: VALID_STATES }, occupation: newOccupations.length > 0 ? { $in: newOccupations } : { $in: VALID_OCCUPATION }, gender: newGenders.length > 0 ? { $in: newGenders } : { $in: VALID_GENDER }, status: newStatuses.length > 0 ? { $in: newStatuses } : { $in: VALID_STATUS }, createdAt: {
+        const query = Object.assign(Object.assign({}, (name && { name: { $regex: name, $options: 'i' } })), { state: newStates.length > 0 && { $in: newStates }, occupation: newOccupations.length > 0 && { $in: newOccupations }, gender: newGenders.length > 0 && { $in: newGenders }, status: newStatuses.length > 0 && { $in: newStatuses }, createdAt: {
                 $gte: startDate,
                 $lte: endDate,
             } });
@@ -443,3 +472,105 @@ const adminUploadUserPicture = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.adminUploadUserPicture = adminUploadUserPicture;
+// to default the payload values:
+// const adminGetUsers = async (req: Request, res: Response) => {
+//     try {
+//         const page = parseInt(req.query.page as string) || 1;
+//         const name = req.query.name as string;
+//         const gender = req.query.gender as string;
+//         const occupation = req.query.occupation as string;
+//         const states = req.query.states as string;
+//         const status = req.query.status as string;
+//         const dateFrom = req.query.dateFrom as string;
+//         const dateTo = req.query.dateTo as string;
+//         const VALID_GENDER = [1, 2];
+//         const VALID_OCCUPATION = [1, 2];
+//         const VALID_STATES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+//         const VALID_STATUS = [1, 2];
+//         const limit = CONST_LIMIT_USERS_PER_PAGE;
+//         const skip = (page - 1) * limit;
+//         let startDate: Date, endDate: Date;
+//         try {
+//             startDate = parseDate(dateFrom);
+//             endDate = parseDate(dateTo);
+//         } catch (error) {
+//             res.status(400).json({
+//                 success: false,
+//                 message: 'Invalid date format, expected DD/MM/YYYY or YYYY-MM-DD',
+//             });
+//             return;
+//         }
+//         startDate.setDate(startDate.getDate() - 1); // Move to 2024-12-30 for 2024-12-31
+//         startDate.setUTCHours(16, 0, 0, 0); // 00:00:00.000 UTC+8 = 2024-12-30T16:00:00.000Z
+//         endDate.setUTCHours(15, 59, 59, 999);
+//         let newStates: number[] = [];
+//         if (states) {
+//             const parsedStates = states.split(',').map(Number);
+//             newStates = parsedStates;
+//         }
+//         let newOccupations: number[] = [];
+//         if (occupation) {
+//             const parsedOccupations = occupation.split(',').map(Number);
+//             newOccupations = parsedOccupations;
+//         }
+//         let newGenders: number[] = [];
+//         if (gender) {
+//             const parsedGenders = gender.split(',').map(Number);
+//             newGenders = parsedGenders;
+//         }
+//         let newStatuses: number[] = [];
+//         if (status) {
+//             const parsedStatuses = status.split(',').map(Number);
+//             newStatuses = parsedStatuses;
+//         }
+//         const query = {
+//             ...(name && { name: { $regex: name, $options: 'i' } }),
+//             state: newStates.length > 0 ? { $in: newStates } : { $in: VALID_STATES },
+//             occupation:
+//                 newOccupations.length > 0 ? { $in: newOccupations } : { $in: VALID_OCCUPATION },
+//             gender: newGenders.length > 0 ? { $in: newGenders } : { $in: VALID_GENDER },
+//             status: newStatuses.length > 0 ? { $in: newStatuses } : { $in: VALID_STATUS },
+//             createdAt: {
+//                 $gte: startDate,
+//                 $lte: endDate,
+//             },
+//         };
+//         const [totalUsersCount, users] = await Promise.all([
+//             User.countDocuments(query),
+//             User.find(query)
+//                 .select(
+//                     'name email gender occupation state status createdAt updatedAt avatar.img_url'
+//                 )
+//                 .skip(skip)
+//                 .limit(limit)
+//                 .sort({ createdAt: -1 })
+//                 .lean(),
+//         ]);
+//         const totalPages = Math.ceil(totalUsersCount / limit);
+//         if (totalUsersCount && users) {
+//             res.status(200).json({
+//                 pagination: {
+//                     currentPage: page,
+//                     totalPages: totalPages,
+//                     limit,
+//                     totalItems: totalUsersCount,
+//                 },
+//                 results: users,
+//             });
+//             return;
+//         }
+//         res.status(404).json({
+//             success: false,
+//             message: 'No users found',
+//         });
+//         return;
+//     } catch (error) {
+//         if (error instanceof Error) {
+//             res.status(500).json({
+//                 success: false,
+//                 message: `[LOG] Error of getListOfUsers: ${error.message}`,
+//             });
+//             return;
+//         }
+//     }
+// };
